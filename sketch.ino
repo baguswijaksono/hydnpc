@@ -6,6 +6,7 @@
 const char* ssid = "";
 const char* password = "";
 const char* serverUrl = "";
+const char* token = "your_token_here";  // Replace with your actual token
 
 // Sensor readings (replace with actual sensor code)
 float temperature = 29.5;
@@ -32,7 +33,10 @@ void loop() {
         HTTPClient http;
 
         // Construct URL with parameters
-        String url = String(serverUrl) + "?temperature=" + String(temperature) + "&humidity=" + String(humidity) + "&ph_level=" + String(phLevel);
+        String url = String(serverUrl) + "?temperature=" + String(temperature) + 
+                     "&humidity=" + String(humidity) + 
+                     "&ph_level=" + String(phLevel) + 
+                     "&token=" + String(token);
 
         http.begin(client, url);   // Pass the secure client and URL
 
