@@ -11,23 +11,41 @@ function main(): void
 
 function listen(): void
 {
-global $conn;
+    global $conn, $token; // Include $token as a global variable
+
+    // Get parameters from the request
     $temperature = isset($_GET['temperature']) ? floatval($_GET['temperature']) : null;
     $humidity = isset($_GET['humidity']) ? floatval($_GET['humidity']) : null;
     $ph_level = isset($_GET['ph_level']) ? floatval($_GET['ph_level']) : null;
+    $received_token = isset($_GET['token']) ? $_GET['token'] : null;
+
+    // Check if the token is valid
+    if ($received_token !== $token) {
+        echo json_encode(["status" => "error", "message" => "Invalid token"]);
+        return;
+    }
+
+    // Process data if all parameters are present and valid
     if ($temperature !== null && $humidity !== null && $ph_level !== null) {
+        // Insert data into the 'data' table
         $stmt = $conn->prepare("INSERT INTO data (temperature, humidity, ph_level) VALUES (?, ?, ?)");
         $stmt->bind_param("ddd", $temperature, $humidity, $ph_level);
         $stmt->execute();
         $stmt->close();
+
+        // Initialize alert message
         $alert_message = null;
+
+        // Check for high temperature alert
         if ($temperature > 30.0) {
-            $alert_message = "High temperature detected: {$temperature}�C";
+            $alert_message = "High temperature detected: {$temperature}°C";
             $stmt = $conn->prepare("INSERT INTO alerts (type, value, message) VALUES ('Temperature', ?, ?)");
             $stmt->bind_param("ds", $temperature, $alert_message);
             $stmt->execute();
             $stmt->close();
         }
+
+        // Check for dangerous pH level alert
         if ($ph_level < 5.5 || $ph_level > 6.5) {
             $alert_message = "Dangerous pH level detected: {$ph_level}";
             $stmt = $conn->prepare("INSERT INTO alerts (type, value, message) VALUES ('pH Level', ?, ?)");
@@ -35,11 +53,15 @@ global $conn;
             $stmt->execute();
             $stmt->close();
         }
+
+        // Return success response
         echo json_encode(["status" => "success", "message" => "Data processed"]);
     } else {
+        // Return error response for missing parameters
         echo json_encode(["status" => "error", "message" => "Missing or invalid parameters"]);
     }
 }
+
 
 function api(): void {
 global $conn;
