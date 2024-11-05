@@ -60,3 +60,43 @@ void loop() {
 
     delay(60000); // Delay to control the frequency of sending data
 }
+
+
+void getConf() {
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    http.begin(endpoint);
+
+    int httpCode = http.GET();
+    if (httpCode == HTTP_CODE_OK) {
+      String payload = http.getString();
+      Serial.println("Received JSON:");
+      Serial.println(payload);
+
+      StaticJsonDocument<512> doc;
+      DeserializationError error = deserializeJson(doc, payload);
+
+      if (!error) {
+        // Access JSON fields, assuming they are "setting1" and "setting2"
+        const char* setting1 = doc["setting1"];
+        int setting2 = doc["setting2"];
+
+        Serial.println("Parsed Settings:");
+        Serial.print("Setting 1: ");
+        Serial.println(setting1);
+        Serial.print("Setting 2: ");
+        Serial.println(setting2);
+      } else {
+        Serial.print("JSON deserialization failed: ");
+        Serial.println(error.c_str());
+      }
+    } else {
+      Serial.print("Error on HTTP request: ");
+      Serial.println(httpCode);
+    }
+
+    http.end();
+  } else {
+    Serial.println("WiFi Disconnected");
+  }
+}
